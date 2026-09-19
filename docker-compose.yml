@@ -1,0 +1,32 @@
+services:
+  user-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: user_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - user_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  user-service:
+    build: ./user-service
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@user-db:5432/user_db
+    volumes:
+      - ./user-service/private_key.pem:/app/private_key.pem:ro
+      - ./user-service/public_key.pem:/app/public_key.pem:ro
+    ports:
+      - "8001:8000"
+    depends_on:
+      user-db:
+        condition: service_healthy
+
+volumes:
+  user_pgdata:
