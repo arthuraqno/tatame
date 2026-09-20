@@ -27,6 +27,34 @@ services:
     depends_on:
       user-db:
         condition: service_healthy
+  
+  product-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: product_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - product_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+  product-service:
+    build: ./product-service
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@product-db:5432/product_db
+    volumes:
+      - ./product-service/public_key.pem:/app/public_key.pem:ro
+    ports:
+      - "8002:8000"
+    depends_on:
+      product-db:
+        condition: service_healthy
 volumes:
   user_pgdata:
+  product_pgdata:

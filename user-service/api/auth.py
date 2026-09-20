@@ -1,12 +1,9 @@
-import os 
 from jose import jwt, JWTError
-from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-load_dotenv()
 
 ALGORITHM = "RS256"
 TEMPO_EXPIRACAO_MINUTOS = 60
