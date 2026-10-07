@@ -78,3 +78,7 @@ class CarrinhoService:
         chave = f"cart:{usuario_id}"
         resultado = redis_client.hdel(chave, str(produto_id))
         return resultado > 0
+
+    def limpar_carrinho(self, usuario_id: int):
+        chave = f"cart:{usuario_id}"
+        redis_client.delete(chave)

@@ -43,3 +43,9 @@ def atualizar_item(produto_id: int, dados: AtualizarQuantidadeRequest, usuario_a
          detail="Produto não encontrado ou estoque insuficiente"
       )
    return carrinho_service.ver_carrinho(usuario_id)
+
+@router.delete("/carrinho")
+def limpar_carrinho(usuario_atual: dict = Depends(obter_usuario_atual)):
+   usuario_id = int(usuario_atual.get("sub"))
+   resultado = carrinho_service.limpar_carrinho(usuario_id) 
+   return {"mensagem": "Carrinho esvaziado"}
