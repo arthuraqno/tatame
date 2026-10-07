@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Depends
-from schemas.carrinho import CarrinhoResponse, ItemCarrinho, ItemRequest, AtualizarQuantidadeRequest
+from schemas.carrinho import CarrinhoResponse, ItemRequest, AtualizarQuantidadeRequest
 from services.carrinho_service import CarrinhoService
 from auth import obter_usuario_atual
 

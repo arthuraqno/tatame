@@ -6,4 +6,4 @@ app.include_router(produto_router)
 
 @app.get("/")
 def home():
-    {"messagem" : "Product Service funcionando!"}
+    return {"mensagem": "Product Service funcionando!"}

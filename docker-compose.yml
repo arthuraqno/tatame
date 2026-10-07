@@ -81,7 +81,37 @@ services:
     depends_on:
       cart-redis:
         condition: service_healthy
+
+  order-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: order_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - order_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  order-service:
+    build: ./order-service
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@order-db:5432/order_db
+      CART_SERVICE_URL: http://cart-service:8000
+    volumes:
+      - ./order-service/public_key.pem:/app/public_key.pem:ro
+    ports:
+      - "8004:8000"
+    depends_on:
+      order-db:
+        condition: service_healthy
 volumes:
   user_pgdata:
   product_pgdata:
   cart_redisdata:
+  order_pgdata:
