@@ -11,14 +11,21 @@ from database import engine
 load_dotenv()
 
 CART_SERVICE_URL = os.getenv("CART_SERVICE_URL")
-
-
 class OrderService:
     def _buscar_carrinho(self, token : str):
         resposta = httpx.get(f"{CART_SERVICE_URL}/carrinho", headers={"Authorization": f"Bearer {token}"})
         if resposta.status_code != 200:
             return None
         return resposta.json()
+
+    def _limpar_carrinho(self, token: str):
+        try:
+            httpx.delete(
+                f"{CART_SERVICE_URL}/carrinho",
+                headers={"Authorization": f"Bearer {token}"}
+            )
+        except httpx.HTTPError:
+            pass
 
     def criar_pedido(self, usuario_id : int, token : str):
         carrinho = self._buscar_carrinho(token)
@@ -48,6 +55,7 @@ class OrderService:
                 itens_criados.append(item_pedido)
 
             session.commit()
+            self._limpar_carrinho(token)
             return self._to_response(pedido, itens_criados)
 
     def _to_response(self, pedido: Pedido, itens: list[ItemPedido]) -> PedidoResponse:
