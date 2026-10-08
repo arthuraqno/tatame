@@ -58,6 +58,26 @@ class OrderService:
             self._limpar_carrinho(token)
             return self._to_response(pedido, itens_criados)
 
+    def listar_pedidos(self, usuario_id: int):
+        with Session(engine) as session:
+            pedidos = session.query(Pedido).filter(Pedido.usuario_id == usuario_id).order_by(Pedido.criado_em.desc()).all()
+
+            lista_resposta = []
+
+            for pedido in pedidos:
+                itens = session.query(ItemPedido).filter(ItemPedido.pedido_id == pedido.id).all()
+                lista_resposta.append(self._to_response(pedido, itens))
+            
+            return lista_resposta
+
+    def buscar_pedido(self, usuario_id: int, pedido_id: int):
+        with Session(engine) as session:
+            pedido = session.query(Pedido).filter(Pedido.id == pedido_id, Pedido.usuario_id == usuario_id).first()
+            if pedido is None:
+                return None
+            itens = session.query(ItemPedido).filter(ItemPedido.pedido_id == pedido_id).all()
+            return self._to_response(pedido, itens)
+
     def _to_response(self, pedido: Pedido, itens: list[ItemPedido]) -> PedidoResponse:
         lista_itens = []
 
