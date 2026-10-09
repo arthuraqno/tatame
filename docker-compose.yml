@@ -110,8 +110,41 @@ services:
     depends_on:
       order-db:
         condition: service_healthy
+  
+  payment-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PAYMENT_DB_PASSWORD}
+      POSTGRES_DB: payment_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - payment_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      
+  payment-service:
+    build: ./payment-service
+    env_file:
+      - ./payment-service/.env
+    environment:
+      DATABASE_URL: postgresql://postgres:${PAYMENT_DB_PASSWORD}@payment-db:5432/payment_db
+      ORDER_SERVICE_URL: http://order-service:8000
+    volumes:
+      - ./payment-service/public_key.pem:/app/public_key.pem:ro
+    ports:
+      - "8005:8000"
+    depends_on:
+      payment-db:
+        condition: service_healthy
+        
 volumes:
   user_pgdata:
   product_pgdata:
   cart_redisdata:
   order_pgdata:
+  payment_pgdata:
