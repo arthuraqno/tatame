@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from sqlalchemy.orm import Session
 from database import engine
 from schemas.pagamento import PagamentoCreate, PagamentoResponse
+from models.pagamento import Pagamento, StatusPagamento
 from models.pagamento import Pagamento
 from decimal import Decimal
 
@@ -66,3 +67,16 @@ class PagamentoService:
             valor=pagamento.valor,
             status=pagamento.status,
             checkout_url=checkout_url)
+
+    def marcar_como_pago(self, stripe_session_id: str):
+        with Session(engine) as session:
+            pagamento = session.query(Pagamento).filter(Pagamento.stripe_session_id == stripe_session_id).first()
+            if pagamento is None:
+                return None
+            if pagamento.status == StatusPagamento.PAGO:
+                return True
+
+            pagamento.status = StatusPagamento.PAGO
+            session.commit()
+            return True
+            

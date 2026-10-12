@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+import os
+import stripe
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from schemas.pagamento import PagamentoResponse, PagamentoCreate
 from services.pagamento_service import PagamentoService
 from auth import obter_usuario_atual
+from dotenv import load_dotenv
+
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 router = APIRouter()
 pagamento_service = PagamentoService()
@@ -24,3 +29,19 @@ def criar_pagamento(
         )
     return pagamento
 
+@router.post("/pagamentos/webhook")
+async def webhook_stripe(request: Request):
+    payload = await request.body()
+    assinatura = request.headers.get("stripe-signature")
+
+    try:
+        evento = stripe.Webhook.construct_event(payload, assinatura, STRIPE_WEBHOOK_SECRET)
+    except (ValueError, stripe.SignatureVerificationError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Assinatura inválida")
+
+    if evento.type == "checkout.session.completed":
+        sessao = evento.data.object
+        if sessao.payment_status == "paid":
+            pagamento_service.marcar_como_pago(sessao.id)
+
+    return {"recebido": True}
