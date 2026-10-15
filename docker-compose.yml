@@ -142,9 +142,26 @@ services:
       payment-db:
         condition: service_healthy
         
+  rabbitmq:
+    image: rabbitmq:4-management
+    hostname: tatame-rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    
 volumes:
   user_pgdata:
   product_pgdata:
   cart_redisdata:
   order_pgdata:
   payment_pgdata:
+  rabbitmq_data:
