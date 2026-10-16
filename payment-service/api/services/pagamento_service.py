@@ -73,10 +73,12 @@ class PagamentoService:
             pagamento = session.query(Pagamento).filter(Pagamento.stripe_session_id == stripe_session_id).first()
             if pagamento is None:
                 return None
-            if pagamento.status == StatusPagamento.PAGO:
-                return True
 
-            pagamento.status = StatusPagamento.PAGO
-            session.commit()
-            return True
+            pedido_id = pagamento.pedido_id
+            
+            if pagamento.status != StatusPagamento.PAGO:
+                pagamento.status = StatusPagamento.PAGO
+                session.commit()
+
+            return pedido_id
             

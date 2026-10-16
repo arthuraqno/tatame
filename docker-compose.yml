@@ -103,12 +103,17 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@order-db:5432/order_db
       CART_SERVICE_URL: http://cart-service:8000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     volumes:
       - ./order-service/public_key.pem:/app/public_key.pem:ro
     ports:
       - "8004:8000"
     depends_on:
       order-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
   
   payment-db:
@@ -134,12 +139,17 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:${PAYMENT_DB_PASSWORD}@payment-db:5432/payment_db
       ORDER_SERVICE_URL: http://order-service:8000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     volumes:
       - ./payment-service/public_key.pem:/app/public_key.pem:ro
     ports:
       - "8005:8000"
     depends_on:
       payment-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
         
   rabbitmq:

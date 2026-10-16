@@ -7,3 +7,4 @@ python-dotenv==1.2.2
 python-jose[cryptography]==3.5.0
 httpx==0.28.1
 stripe==15.6.1
+pika==1.4.4

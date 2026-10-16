@@ -1,7 +1,7 @@
 import httpx
 import os
 from schemas.pedido import ItemPedidoResponse, PedidoResponse
-from models.pedido import Pedido
+from models.pedido import Pedido, StatusPedido
 from models.item_pedido import ItemPedido
 from dotenv import load_dotenv
 from decimal import Decimal
@@ -98,3 +98,21 @@ class OrderService:
             criado_em=pedido.criado_em,
             itens=lista_itens
         )
+
+    def marcar_como_pago(self, pedido_id: int):
+        with Session(engine) as session:
+            pedido  = session.query(Pedido).filter(Pedido.id == pedido_id).first()
+            if pedido is None:
+                return None
+            if pedido.status == StatusPedido.PENDENTE:
+                pedido.status = StatusPedido.PAGO
+                session.commit()
+            if pedido.status != StatusPedido.PAGO:
+                return None
+
+            itens = session.query(ItemPedido).filter(ItemPedido.pedido_id == pedido_id).all()
+            return {
+                "pedido_id" : pedido.id,
+                "usuario_id" : pedido.usuario_id,
+                "itens" : [{"produto_id": i.produto_id, "quantidade": i.quantidade} for i in itens],
+            }

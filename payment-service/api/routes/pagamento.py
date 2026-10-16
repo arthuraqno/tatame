@@ -4,8 +4,11 @@ from fastapi import APIRouter, HTTPException, status, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from schemas.pagamento import PagamentoResponse, PagamentoCreate
 from services.pagamento_service import PagamentoService
+from mensageria import publicar_evento
 from auth import obter_usuario_atual
 from dotenv import load_dotenv
+
+load_dotenv()
 
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
@@ -42,6 +45,8 @@ async def webhook_stripe(request: Request):
     if evento.type == "checkout.session.completed":
         sessao = evento.data.object
         if sessao.payment_status == "paid":
-            pagamento_service.marcar_como_pago(sessao.id)
+            pedido_id = pagamento_service.marcar_como_pago(sessao.id)
+            if pedido_id is not None:
+                publicar_evento("pagamento.confirmado", {"pedido_id": pedido_id})
 
     return {"recebido": True}
