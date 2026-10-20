@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.produto import Produto
+from models.pedido_processado import PedidoProcessado
 from schemas.produto import ProdutoResponse
 from database import engine
 
@@ -74,4 +75,21 @@ class ProdutoService:
             produto.ativo = False
             session.commit()
             return self._to_response(produto)
-            
+
+    def baixar_estoque(self, pedido_id: int, itens: list):
+        with Session(engine) as session:
+            pedido = session.query(PedidoProcessado).filter(PedidoProcessado.pedido_id == pedido_id).first()
+            if pedido is not None:
+                return False
+            for item in itens:
+                produto = session.query(Produto).filter(Produto.id == item["produto_id"]).first()
+                if produto is None:
+                    print(f"Produto {item['produto_id']} não encontrado")
+                    continue
+                produto.estoque -= item["quantidade"]
+                if produto.estoque < 0:
+                    print(f"Estoque negativo no produto {produto.id}")
+                    
+            session.add(PedidoProcessado(pedido_id=pedido_id))
+            session.commit()
+            return True

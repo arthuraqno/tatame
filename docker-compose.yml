@@ -48,6 +48,9 @@ services:
     build: ./product-service
     environment:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@product-db:5432/product_db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     volumes:
       - ./product-service/public_key.pem:/app/public_key.pem:ro
     ports:
@@ -55,7 +58,24 @@ services:
     depends_on:
       product-db:
         condition: service_healthy
-  
+      rabbitmq:
+        condition: service_healthy
+
+  product-consumer:
+    build: ./product-service
+    command: ["python", "-u", "consumidor.py"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@product-db:5432/product_db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    depends_on:
+      product-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   cart-redis:
     image: redis:7
     command: redis-server --requirepass ${REDIS_PASSWORD}
@@ -110,6 +130,22 @@ services:
       - ./order-service/public_key.pem:/app/public_key.pem:ro
     ports:
       - "8004:8000"
+    depends_on:
+      order-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+  
+  order-consumer:
+    build: ./order-service
+    command: ["python", "-u", "consumidor.py"]
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@order-db:5432/order_db
+      CART_SERVICE_URL: http://cart-service:8000
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     depends_on:
       order-db:
         condition: service_healthy
