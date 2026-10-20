@@ -23,6 +23,7 @@ class ProdutoResponse(BaseModel):
 
 class ProdutoUpdate(BaseModel):
     nome : str | None = None 
+    descricao : str | None = None
     preco : Decimal | None = None
     categoria: str | None = None
     tamanho : str | None = None
