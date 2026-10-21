@@ -3,6 +3,7 @@ from models.usuario import Usuario
 from schemas.usuario import UsuarioResponse
 from database import engine
 from auth import gerar_hash_senha, verificar_senha, criar_token
+from mensageria import publicar_evento
 
 class UsuarioService:
     def cadastrar_usuario(self, email, senha, telefone, ):
@@ -15,6 +16,14 @@ class UsuarioService:
             session.add(usuario)
             session.commit()
             session.refresh(usuario)
+            try:
+                publicar_evento("usuario.criado", {
+                    "usuario_id": usuario.id,
+                    "email": usuario.email,
+                    "telefone": usuario.telefone,
+                })
+            except Exception as erro:
+                print(f"Falha ao publicar usuario.criado: {erro}")
             return self._to_response(usuario)
 
     def _to_response(self, usuario: Usuario) -> UsuarioResponse:

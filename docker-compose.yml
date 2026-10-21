@@ -19,6 +19,9 @@ services:
     build: ./user-service
     environment:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@user-db:5432/user_db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
     volumes:
       - ./user-service/private_key.pem:/app/private_key.pem:ro
       - ./user-service/public_key.pem:/app/public_key.pem:ro
@@ -26,6 +29,8 @@ services:
       - "8001:8000"
     depends_on:
       user-db:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
   
   product-db:
@@ -187,7 +192,37 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-        
+  
+  notification-db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      POSTGRES_DB: notification_db
+    ports:
+      - "5437:5432"
+    volumes:
+      - notification_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  notification-service:
+    build: ./notification-service
+    restart: unless-stopped
+    environment:
+        DATABASE_URL: postgresql://postgres:${NOTIFICATION_DB_PASSWORD}@notification-db:5432/notification_db
+        RABBITMQ_HOST: rabbitmq
+        RABBITMQ_USER: ${RABBITMQ_USER}
+        RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    depends_on:
+      notification-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   rabbitmq:
     image: rabbitmq:4-management
     hostname: tatame-rabbit
@@ -211,3 +246,4 @@ volumes:
   order_pgdata:
   payment_pgdata:
   rabbitmq_data:
+  notification_pgdata:
