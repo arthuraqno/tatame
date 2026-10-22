@@ -11,9 +11,14 @@ def cadastrar_usuario(dados: UsuarioCreate):
 
 @router.post("/usuarios/login", response_model=TokenResponse)
 def login_usuario(dados: LoginRequest):
-    token = usuario_service.login(dados.email, dados.senha)
-    if token is None:
+    resultado = usuario_service.login(dados.email, dados.senha)
+    if resultado == "bloqueado":
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Muitas tentativas de login. Tente novamente em alguns minutos."
+        )
+    if resultado is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou senha incorretos")
-    return TokenResponse(access_token=token, token_type="bearer")
+    return TokenResponse(access_token=resultado, token_type="bearer")
