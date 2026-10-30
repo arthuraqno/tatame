@@ -9,7 +9,7 @@ class UsuarioResponse(BaseModel):
     id: int
     email: str
     role : str
-    telefone : str
+    telefone :str | None = None
 
 class LoginRequest(BaseModel):
     email: EmailStr

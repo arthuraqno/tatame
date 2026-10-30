@@ -17,6 +17,8 @@ services:
 
   user-service:
     build: ./user-service
+    env_file:
+      - ./user-service/.env
     environment:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@user-db:5432/user_db
       RABBITMQ_HOST: rabbitmq

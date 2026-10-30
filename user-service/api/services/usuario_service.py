@@ -43,13 +43,43 @@ class UsuarioService:
         with Session(engine) as session:
             usuario = session.query(Usuario).filter(Usuario.email == email).first()
 
-            if usuario is None or not verificar_senha(senha, usuario.senha_hash):
+            if usuario is None or usuario.senha_hash is None or not verificar_senha(senha, usuario.senha_hash):
                 self.registrar_falha(email)
                 return None
             
             self.limpar_falhas(email)
             token = criar_token({"sub": str(usuario.id), "role": usuario.role})
             return token
+
+    def login_github(self, identidade: dict):
+        github_id = identidade["github_id"]
+        email = identidade["email"]
+
+        with Session(engine) as session:
+            usuario = session.query(Usuario).filter(Usuario.github_id == github_id).first()
+
+            if usuario is None:
+                if email is None:
+                    return "sem_email", None
+                existente = session.query(Usuario).filter(Usuario.email == email).first()
+                if existente is not None:
+                    return "conflito", None
+
+                usuario = Usuario(email=email, github_id=github_id)
+                session.add(usuario)
+                session.commit()
+                session.refresh(usuario)
+                try:
+                    publicar_evento("usuario.criado", {
+                        "usuario_id": usuario.id,
+                        "email": usuario.email,
+                        "telefone": usuario.telefone,
+                    })
+                except Exception as erro:
+                    print(f"Falha ao publicar usuario.criado: {erro}")
+
+            token = criar_token({"sub": str(usuario.id), "role": usuario.role})
+            return "ok", token
 
     def _chave_falhas(self, email: str) -> str:
         return f"login:falhas:{email.lower()}"
