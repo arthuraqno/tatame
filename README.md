@@ -65,13 +65,3 @@ A documentação de cada serviço fica em `http://localhost:<porta>/docs`, e o p
 ```bash
 stripe listen --events checkout.session.completed --forward-to localhost:8005/pagamentos/webhook
 ```
-
-## Limitações conhecidas
-
-- **Envio de e-mail simulado.** O `notification-service` monta a mensagem e a registra no log. O envio real por um provedor fica para uma próxima versão.
-- **Stripe em modo de teste.** Nenhum valor real é cobrado.
-- **Sem deploy público.** O projeto foi pensado para rodar com `docker compose up`.
-- **Sem PKCE no OAuth2**, que a documentação do GitHub recomenda. E uma conta do GitHub não é ligada automaticamente a uma conta com senha que já exista com o mesmo e-mail, porque o cadastro não verifica e-mail (a resposta é `409`).
-- **Logout sem invalidar o token.** O JWT vale até expirar.
-- **Alterações de banco feitas à mão.** Um projeto maior usaria uma ferramenta de migração, como o Alembic.
-- **A CI valida o build**, ou seja, o `docker-compose.yml` e a imagem de cada serviço. O projeto ainda não tem testes automatizados.
