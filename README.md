@@ -65,3 +65,7 @@ A documentação de cada serviço fica em `http://localhost:<porta>/docs`, e o p
 ```bash
 stripe listen --events checkout.session.completed --forward-to localhost:8005/pagamentos/webhook
 ```
+## Observações
+
+- **Stripe em modo de teste:** nenhum valor real é cobrado.
+- **Envio de e-mail simulado:** o `notification-service` monta a mensagem e a registra no log. O envio por um provedor de e-mail fica para uma próxima versão.
